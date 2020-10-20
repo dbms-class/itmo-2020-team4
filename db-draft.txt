@@ -1,0 +1,36 @@
+// Done using dbdiagram.io
+
+Table Facilities as F{
+  id int [pk, increment]
+  address varchar
+  n_objects int
+  function varchar
+  name varchar  [default: null]
+}
+
+Table Sportsmen as S {
+  id int [pk, increment] // auto-increment
+  full_name varchar
+  delegation_id int 
+  place int [ref: > F.id]
+  
+  // and many more
+}
+
+Table Delegations as D{
+  id int [pk, increment]
+  country varchar
+  head_name varchar [unique]
+  head_phone varchar [unique]
+  place int [ref: > F.id]
+ }
+
+// Creating references
+// You can also define relaionship separately
+// > many-to-one; < one-to-many; - one-to-one
+Ref: S.delegation_id > D.id
+
+Table SportFacilities as F{
+  facility_id int [ref: > F.id]
+  sport enum
+}
