@@ -34,3 +34,4 @@ Table SportFacilities as F{
   facility_id int [ref: > F.id]
   sport enum
 }
+
