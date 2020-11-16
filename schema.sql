@@ -1,19 +1,23 @@
+CREATE EXTENSION IF NOT EXISTS citext; -- for case insensitive text
+
 -- Dict for Sports
 create table Sport
 (
-    id              serial primary key,
-    name            text unique not null check (char_length(name) > 0)
+    id      serial primary key,
+    name    citext unique not null check (char_length(name) > 0)
 );
 
 -- Dict for Countries that are coming to the event
 create table Country
 (
-    name            text primary key check (char_length(name) > 0)
+    id      serial primary key,
+    name    citext unique not null check (char_length(name) > 0)
 );
 
 create table FacilityFunction
 (
-    name            text primary key check (char_length(name) > 0)
+    id      serial primary key,
+    name    citext unique not null check (char_length(name) > 0)
 );
 
 -- у каждого объекта есть адрес (название улицы в деревнеи номер дома)
@@ -35,7 +39,7 @@ create table Facility
 
     address_id      int references Address not null,
 
-    function        text references FacilityFunction not null,
+    function_id     int references FacilityFunction not null,
     name            text
 );
 
@@ -45,11 +49,11 @@ create table Delegation
 (
     id              serial primary key,
 
-    director_name   text unique not null check (char_length(director_name) > 0),
-    director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'), -- can be used as key?
+    director_name   text not null check (char_length(director_name) > 0),
+    director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'),
 
     headquarters_id int references Facility not null,
-    country         text references Country not null
+    country_id      int references Country not null
 );
 
 -- у каждым спортсмена не уникальный волонтёр(имя,телефон,карточка как у спортсмена)
