@@ -1,7 +1,8 @@
 -- Dict for Sports
 create table Sport
 (
-    name            text primary key check (char_length(name) > 0)
+    id              serial primary key,
+    name            text unique not null check (char_length(name) > 0)
 );
 
 -- Dict for Countries that are coming to the event
@@ -24,7 +25,7 @@ create table Address
     house_number    int not null check (house_number > 0),
     additional      text, -- if there are corps and so on
 
-    unique (street_name, house_number, additional)
+    unique (street_name, house_number)
 );
 
 -- у каждого объекта есть адрес, функц. предн. и опц. собственное имя
@@ -42,12 +43,13 @@ create table Facility
 -- в одном из объектов должен быть штаб делегации
 create table Delegation
 (
-    director_name   text primary key check (char_length(director_name) > 0),
+    id              serial primary key,
+
+    director_name   text unique not null check (char_length(director_name) > 0),
+    director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'), -- can be used as key?
 
     headquarters_id int references Facility not null,
-    country         text references Country not null,
-
-    director_phone  text unique not null check(director_phone ~ E'^\\+\\d{11,15}') -- can be used as key?
+    country         text references Country not null
 );
 
 -- у каждым спортсмена не уникальный волонтёр(имя,телефон,карточка как у спортсмена)
@@ -66,7 +68,7 @@ create table Sportsman
 (
     card_number   serial primary key check(card_number < 1e6),
 
-    director      text references Delegation not null,
+    delegation_id int references Delegation not null,
     facility_id   int references Facility not null,
     volunteer_id  int references Volunteer not null,
 
@@ -78,46 +80,70 @@ create table Sportsman
 );
 
 --Каждый спортсмен выступает в каком-то виде спорта, возможно даже не в одном
-create table SportParticipation
-(
-    sportsman_card  int references Sportsman not null,
-    sport           text references Sport not null, 
+-- create table SportParticipation
+-- (
+--     sportsman_card  int references Sportsman not null,
+--     sport           int references Sport not null, 
 
-    unique (sportsman_card, sport)
-);
+--     unique (sportsman_card, sport)
+-- );
+-- SportParticiptaion can be mined from CompetitionParticipation
 
 -- некоторые объекты могут быть проассоциированы с некоторым множеством видов спорта, которые в них проходят
 create table SportFacility -- sport - facility relation
 (
     id              serial primary key,
     facility        int references Facility not null,
-    sport           text references Sport not null, 
+    sport_id        int references Sport not null, 
 
-    unique (facility, sport)
-);
-
--- Swim 200m/400m, Run with/wo obstacles and so on
-create table CompetitionType
-(
-    type          text primary key,
-    sport         text references Sport not null
+    unique (facility, sport_id)
 );
 
 -- соревнование – событие, происходящее в дату и время, участвуют некоторые спортсмены,
 -- в некотором объекте
 create table Competition
 (
-    id                  serial primary key,
+    id          serial primary key,
 
-    place               int references SportFacility not null,
-    type                text references CompetitionType not null,
+    facility    int references Facility not null,
+    sport_id    int references Sport not null,
 
-    time_               timestamp not null,
-    description         text not null check (char_length(description) > 0), -- Women/Men Final, Semi, Quarters, top-100
+    time_       timestamp not null,
+    n_level     int not null check (n_level > 0),
+    -- 1 for Final, 2 for Semi, 3 for 1/4, 4 for 1/2^(4-1) and so on
+    n_group     int not null check (n_group > 0),
+    -- 1 in Final, 2 groups in Semi, 4 groups in 1/4, 2^(5) in 1/8
 
-    unique (time_, place),
-    unique (description, type) 
-    -- only one Women 200m swim lower bracket semi final, etc.
+    unique (time_, facility),
+    unique (sport_id, n_level, n_group),
+
+    constraint n_pairs_for_level check (n_group <= power(2, n_level-1)),
+    constraint fk_sport_facility foreign key (facility, sport_id)
+    references SportFacility(facility, sport_id)
+);
+
+create table CompetitionParticipation
+(
+    sportsman_card      int references Sportsman not null,
+    competition_id      int references Competition not null,
+
+    sport_id    int references Sport not null,
+    n_level     int not null check (n_level > 0),
+    n_group      int not null check (n_group > 0),
+
+    position            int check (position > 0), -- not only medals matter... 
+    -- null if comp has not finished yet or no position at all
+    -- places 32-64 are all signed 33, so not unique
+
+    unique (sportsman_card, competition_id),
+    unique (sportsman_card, sport_id, n_level), -- only one participation in a leg
+    constraint fk_one_leg foreign key (sport_id, n_level, n_group)
+    references Competition(sport_id, n_level, n_group)
+);
+
+create table CompetitionWithMedals
+(
+    competition_id          int references Competition unique not null
 );
 
 create table MedalHolder
@@ -126,9 +152,20 @@ create table MedalHolder
     gold_holder             int references Sportsman not null,
     silver_holder           int references Sportsman not null,
     bronze_holder           int references Sportsman not null,
-    second_bronze_holder    int references Sportsman, -- Say hello to Judo
+    s_bronze_holder         int references Sportsman, -- Say hello to Judo
 
-    unique (competition_id)
+    unique (competition_id),
+
+    constraint fk_comp_has_medals foreign key (competition_id)
+    references CompetitionWithMedals(competition_id),
+    constraint fk_gold_participated foreign key (gold_holder, competition_id)
+    references CompetitionParticipation(sportsman_card, competition_id),
+    constraint fk_silver_participated foreign key (silver_holder, competition_id)
+    references CompetitionParticipation(sportsman_card, competition_id),
+    constraint fk_bronze_participated foreign key (bronze_holder, competition_id)
+    references CompetitionParticipation(sportsman_card, competition_id),
+    constraint fk_s_bronze_participated foreign key (s_bronze_holder, competition_id)
+    references CompetitionParticipation(sportsman_card, competition_id)
 );
 
 alter table MedalHolder
@@ -136,24 +173,9 @@ add constraint chk_dif_holders
 check (gold_holder != silver_holder and 
        silver_holder != bronze_holder and 
        bronze_holder != gold_holder and
-       second_bronze_holder != gold_holder and
-       second_bronze_holder != silver_holder and
-       second_bronze_holder != bronze_holder);
-
-create table CompetitionParticipation
-(
-    sportsman_card      int references Sportsman not null,
-    competition_id      int references Competition not null,
-
-    time_               timestamp not null, -- we leave time here so
-    -- How to deal with participating sportsmen???
-    position            int check (position > 0), -- not only medals matter... 
-    -- null if comp has not finished yet or no position at all
-    -- places 32-64 are all signed 33, so not unique
-
-    unique (sportsman_card, competition_id),
-    unique (sportsman_card, time_)
-);
+       s_bronze_holder != gold_holder and
+       s_bronze_holder != silver_holder and
+       s_bronze_holder != bronze_holder);
 
 -- транспортное средство (регистрационный номер и вместимость)
 create table Transport
@@ -176,27 +198,3 @@ create table VolunteerTask
 
     unique (time_, volunteer_id)
 );
-
--- Fill
-INSERT INTO Sport (name)
-SELECT unnest(ARRAY['swimming', 'running', 'football', 'basketball', 'tennis', 'poker', 'chess']);
-
-INSERT INTO Country (name)
-SELECT unnest(ARRAY['Russia', 'Ukraine', 'Brazil', 'Peru', 'Honduras', 'Chile', 'Kazakhstan']);
-
-INSERT INTO FacilityFunction (name)
-SELECT unnest(ARRAY['restaurant', 'household', 'pool', 'track', 'stadium', 'pitch']);
-
-WITH Names AS (
-  SELECT unnest(ARRAY[
-      'Pooshkina', 'Kolotooshkina', 'Lenina', 'Uncanny'
-  ]) AS name
-)
-INSERT INTO Address(street_name, house_number)
-SELECT name, (3+random()*20)::INT
-FROM Names;
-
-
-INSERT INTO Transport (registration, capacity) VALUES ('A321TT179',3);
-
-INSERT INTO Volunteer (name, phone_number) VALUES ('SomeVolunteer','+4546667772288');
