@@ -16,14 +16,14 @@ INSERT INTO Address(street_name, house_number)
 SELECT name, (3+random()*20)::INT
 FROM Names;
 
-INSERT INTO Facility(address_id, function) VALUES (1,'pool');
-INSERT INTO Facility(address_id, function) VALUES (1,'household');
-INSERT INTO Facility(address_id, function) VALUES (2,'household');
+INSERT INTO Facility(address_id, function_id) VALUES (1,3);
+INSERT INTO Facility(address_id, function_id) VALUES (1,2);
+INSERT INTO Facility(address_id, function_id) VALUES (2,2);
 
 INSERT INTO Delegation(director_name, director_phone, headquarters_id, country) 
-VALUES ('Bond', '+79996664223', 2, 'Peru');
+VALUES ('Bond', '+79996664223', 2, 2);
 INSERT INTO Delegation(director_name, director_phone, headquarters_id, country)
-VALUES ('Jane', '+79996662342', 2, 'Brazil');
+VALUES ('Jane', '+79996662342', 2, 3);
 
 INSERT INTO Volunteer (name, phone_number) VALUES ('SomeVolunteer','+4546667772288');
 
@@ -49,17 +49,13 @@ INSERT INTO CompetitionWithMedals(competition_id) VALUES (1);
 
 -- All three in final heh
 INSERT INTO 
-CompetitionParticipation(sportsman_card, competition_id, sport_id, n_level, n_group)
-VALUES (1, 1, 1, 1, 1);
+CompetitionParticipation(sportsman_card, competition_id, final_pos)
+VALUES (1, 1, 2);
 INSERT INTO 
-CompetitionParticipation(sportsman_card, competition_id, sport_id, n_level, n_group)
-VALUES (2, 1, 1, 1, 1);
+CompetitionParticipation(sportsman_card, competition_id, final_pos)
+VALUES (2, 1, 3);
 INSERT INTO 
-CompetitionParticipation(sportsman_card, competition_id, sport_id, n_level, n_group)
-VALUES (3, 1, 1, 1, 1);
-
-INSERT INTO 
-MedalHolder(competition_id, gold_holder, silver_holder, bronze_holder)
-VALUES (1, 2, 3, 1);
+CompetitionParticipation(sportsman_card, competition_id, final_pos)
+VALUES (3, 1, 1);
 
 INSERT INTO Transport (registration, capacity) VALUES ('A321TT179',3);

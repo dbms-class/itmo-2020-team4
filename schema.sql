@@ -131,55 +131,11 @@ create table CompetitionParticipation
     sportsman_card      int references Sportsman not null,
     competition_id      int references Competition not null,
 
-    sport_id    int references Sport not null,
-    n_level     int not null check (n_level > 0),
-    n_group      int not null check (n_group > 0),
+    final_pos           int check (final_pos > 0),
+    -- pos 1 == gold, pos 2 == silver, pos 3 == bronze
 
-    position            int check (position > 0), -- not only medals matter... 
-    -- null if comp has not finished yet or no position at all
-    -- places 32-64 are all signed 33, so not unique
-
-    unique (sportsman_card, competition_id),
-    unique (sportsman_card, sport_id, n_level), -- only one participation in a leg
-    constraint fk_one_leg foreign key (sport_id, n_level, n_group)
-    references Competition(sport_id, n_level, n_group)
+    unique (sportsman_card, competition_id)
 );
-
-create table CompetitionWithMedals
-(
-    competition_id          int references Competition unique not null
-);
-
-create table MedalHolder
-(
-    competition_id          int references Competition not null,
-    gold_holder             int references Sportsman not null,
-    silver_holder           int references Sportsman not null,
-    bronze_holder           int references Sportsman not null,
-    s_bronze_holder         int references Sportsman, -- Say hello to Judo
-
-    unique (competition_id),
-
-    constraint fk_comp_has_medals foreign key (competition_id)
-    references CompetitionWithMedals(competition_id),
-    constraint fk_gold_participated foreign key (gold_holder, competition_id)
-    references CompetitionParticipation(sportsman_card, competition_id),
-    constraint fk_silver_participated foreign key (silver_holder, competition_id)
-    references CompetitionParticipation(sportsman_card, competition_id),
-    constraint fk_bronze_participated foreign key (bronze_holder, competition_id)
-    references CompetitionParticipation(sportsman_card, competition_id),
-    constraint fk_s_bronze_participated foreign key (s_bronze_holder, competition_id)
-    references CompetitionParticipation(sportsman_card, competition_id)
-);
-
-alter table MedalHolder
-add constraint chk_dif_holders 
-check (gold_holder != silver_holder and 
-       silver_holder != bronze_holder and 
-       bronze_holder != gold_holder and
-       s_bronze_holder != gold_holder and
-       s_bronze_holder != silver_holder and
-       s_bronze_holder != bronze_holder);
 
 -- транспортное средство (регистрационный номер и вместимость)
 create table Transport
