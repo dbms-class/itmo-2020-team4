@@ -7,13 +7,6 @@ create table Sport
     name    citext unique not null check (char_length(name) > 0)
 );
 
--- Dict for Countries that are coming to the event
-create table Country
-(
-    id      serial primary key,
-    name    citext unique not null check (char_length(name) > 0)
-);
-
 create table FacilityFunction
 (
     id      serial primary key,
@@ -47,13 +40,12 @@ create table Facility
 -- в одном из объектов должен быть штаб делегации
 create table Delegation
 (
-    id              serial primary key,
+    name            citext primary key check (char_length(name) > 0),
 
     director_name   text not null check (char_length(director_name) > 0),
     director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'),
 
-    headquarters_id int references Facility not null,
-    country_id      int references Country not null
+    headquarters_id int references Facility not null
 );
 
 -- у каждым спортсмена не уникальный волонтёр(имя,телефон,карточка как у спортсмена)
@@ -72,15 +64,15 @@ create table Sportsman
 (
     card_number   serial primary key check(card_number < 1e6),
 
-    delegation_id int references Delegation not null,
-    facility_id   int references Facility not null,
+    delegation_id citext references Delegation not null,
     volunteer_id  int references Volunteer not null,
+    facility_id   int references Facility,
 
     name          text not null check (char_length(name) > 0),
     gender        bool, -- null for those that have not decided yet
-    height        float not null check (height > 0),
-    weight        float not null check (weight > 0),
-    age           int not null check (age < 99 and age > 14)
+    height        float check (height > 0),
+    weight        float check (weight > 0),
+    age           int check (age < 99 and age > 14)
 );
 
 --Каждый спортсмен выступает в каком-то виде спорта, возможно даже не в одном
