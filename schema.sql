@@ -40,7 +40,7 @@ create table Facility
 -- в одном из объектов должен быть штаб делегации
 create table Delegation
 (
-    name            citext primary key check (char_length(name) > 0),
+    country_name    citext primary key check (char_length(name) > 0),
 
     director_name   text not null check (char_length(director_name) > 0),
     director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'),

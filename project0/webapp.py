@@ -23,12 +23,32 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    def register_delegation(self, country_name, director_name, director_phone):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute(f"INSERT INTO delegation(name, director_name, director_phone) "
+                        f"VALUES ('{country_name}', '{director_name}', '+{director_phone.strip()}')")
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def register_volunteer(self, name, phone_number):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute(f"INSERT INTO volunteer(name, phone_number) "
+                        f"VALUES ('{name}', '+{phone_number.strip()}')")
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def register(self, sportsman, country, volunteer_id):
         if not sportsman or not country or not volunteer_id:
             # error
             pass
         with create_connection(self.args) as db:
             cur = db.cursor()
+            # cur.execute("select * from information_schema.tables")
+            print("sportsman.isdigit()")
+            print(sportsman.isdigit())
             if sportsman.isdigit():
                 # TODO should we create a new country here?
                 cur.execute(f"UPDATE sportsman SET delegation_id = '{country}', "
