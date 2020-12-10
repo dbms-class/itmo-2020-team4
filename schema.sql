@@ -42,7 +42,7 @@ create table Delegation
 (
     id              serial primary key,
 
-    country_name    citext not null check (char_length(country_name) > 0),
+    country_name    citext unique not null check (char_length(country_name) > 0),
     director_name   text not null check (char_length(director_name) > 0),
     director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'),
 
@@ -65,7 +65,7 @@ create table Sportsman
 (
     card_number   serial primary key check(card_number < 1e6),
 
-    country_name  citext references Delegation not null,
+    country_name  citext not null,
     volunteer_id  int references Volunteer not null,
     facility_id   int references Facility,
 
@@ -73,7 +73,10 @@ create table Sportsman
     gender        bool, -- null for those that have not decided yet
     height        float check (height > 0),
     weight        float check (weight > 0),
-    age           int check (age < 99 and age > 14)
+    age           int check (age < 99 and age > 14),
+
+    constraint fk_sportsman_country foreign key (country_name)
+    references Delegation(country_name)
 );
 
 --Каждый спортсмен выступает в каком-то виде спорта, возможно даже не в одном
