@@ -75,6 +75,24 @@ class App(object):
             volunteers = cur.fetchall()
             return [{"id": b[0], "name": b[1]} for b in volunteers]
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def volunteer_load(self, volunteer_id=None, sportsman_count=None, total_task_count=None):
+        """
+        :param volunteer_id: оставляет только во-лонтера с указанным идентификатором;
+        :param sportsman_count: оставляет тех, закем закреплено спортсменов неменьше, чем значение аргумента;
+        :param total_task_count: ставляет тех, у кого общее количество задач не меньше, чем значение аргумента;
+        :return: JSON
+            [ {"volunteer_id": X, "volunteer_name": X, "sportsman_count": X, "total_task_count": X,
+            "next_task_id": X, "next_task_time": X}, ... ]
+        """
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute("SELECT volunteer_id, COUNT(*) as count FROM volunteertask GROUP BY volunteer_id "
+                        "ORDER BY count DESC")
+            volunteers_with_counts = cur.fetchall()
+            return [{"id": b[0], "total_task_count": b[1]} for b in volunteers_with_counts]
+
 
 if __name__ == '__main__':
     cherrypy.config.update({

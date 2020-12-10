@@ -75,3 +75,19 @@ CompetitionParticipation(sportsman_card, competition_id, final_pos)
 VALUES (3, 1, 3);
 
 INSERT INTO Transport (registration, capacity) VALUES ('A321TT179',3);
+
+-- 3 for 1000001
+INSERT INTO volunteertask(volunteer_id, time_, description) VALUES
+(1000001, '2021-05-30 13:00:00', 'Take Phelps To Pool');
+INSERT INTO volunteertask(volunteer_id, time_, description) VALUES
+(1000001, '2021-06-30 13:00:00', 'Take Phelps To Pool');
+INSERT INTO volunteertask(volunteer_id, time_, description) VALUES
+(1000001, '2021-06-15 16:20:00', 'Chill');
+-- 2 for 1000002
+INSERT INTO volunteertask(volunteer_id, time_, description) VALUES
+(1000002, '2021-06-15 16:20:00', 'Chill');
+INSERT INTO volunteertask(volunteer_id, time_, description) VALUES
+(1000002, '2021-06-23 17:00:00', 'Do something useful');
+-- 1 for 1000003
+INSERT INTO volunteertask(volunteer_id, time_, description) VALUES
+(1000003, '2021-05-23 18:00:00', 'Do anything');
