@@ -28,7 +28,7 @@ class App(object):
         with create_connection(self.args) as db:
             cur = db.cursor()
             cur.execute("INSERT INTO delegation(country_name, director_name, director_phone) "
-                        f"VALUES ('{country_name}', '{director_name}', '{director_phone}')")
+                        "VALUES (%s, %s, %s)", (country_name, director_name, director_phone))
 
 
     @cherrypy.expose
@@ -36,8 +36,8 @@ class App(object):
     def register_volunteer(self, name, phone_number):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute(f"INSERT INTO volunteer(name, phone_number) "
-                        f"VALUES ('{name}', '{phone_number}')")
+            cur.execute("INSERT INTO volunteer(name, phone_number) "
+                        "VALUES (%s, $s)", (name, phone_number))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -49,12 +49,13 @@ class App(object):
             cur = db.cursor()
             if sportsman.isdigit():
                 # TODO should we create a new country here?
-                cur.execute(f"UPDATE sportsman SET country_name = '{country_name}', "
-                            f"volunteer_id = {volunteer_id} "
-                            f"WHERE card_number = {sportsman};")
+                cur.execute("UPDATE sportsman SET country_name = %s, "
+                            "volunteer_id = %s "
+                            "WHERE card_number = %s",
+                            (country_name, volunteer_id, sportsman))
             else:
-                cur.execute(f"INSERT INTO Sportsman (name, volunteer_id, country_name) "
-                            f"VALUES ('{sportsman}', {volunteer_id}, '{country_name}');")
+                cur.execute("INSERT INTO Sportsman (name, volunteer_id, country_name) "
+                            "VALUES (%s, %s, %s)", (sportsman, volunteer_id, country_name))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
