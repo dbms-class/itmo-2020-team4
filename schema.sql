@@ -40,12 +40,12 @@ create table Facility
 -- в одном из объектов должен быть штаб делегации
 create table Delegation
 (
-    country_name    citext primary key check (char_length(name) > 0),
+    country_name    citext primary key check (char_length(country_name) > 0),
 
     director_name   text not null check (char_length(director_name) > 0),
     director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'),
 
-    headquarters_id int references Facility not null
+    headquarters_id int references Facility
 );
 
 -- у каждым спортсмена не уникальный волонтёр(имя,телефон,карточка как у спортсмена)
@@ -54,7 +54,7 @@ create table Volunteer
     card_number     serial primary key check(card_number >= 1e6),
 
     name            text not null check (char_length(name) > 0),
-    phone_number    text not null check (phone_number ~ E'^\\+\\d{11,15}') 
+    phone_number    text not null check (phone_number ~ E'^\\+\\d{11,15}')
 );
 -- У спортсменов карточки до миллиона, у волонтёров после
 alter sequence volunteer_card_number_seq restart with 1000000;
@@ -64,7 +64,7 @@ create table Sportsman
 (
     card_number   serial primary key check(card_number < 1e6),
 
-    delegation_id citext references Delegation not null,
+    country_name  citext references Delegation not null,
     volunteer_id  int references Volunteer not null,
     facility_id   int references Facility,
 

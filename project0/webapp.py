@@ -6,6 +6,7 @@ import cherrypy
 from connect import parse_cmd_line
 from connect import create_connection
 from static import index
+import logging
 
 
 @cherrypy.expose
@@ -26,8 +27,8 @@ class App(object):
     def register_delegation(self, country_name, director_name, director_phone):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute(f"INSERT INTO delegation(name, director_name, director_phone) "
-                        f"VALUES ('{country_name}', '{director_name}', '+{director_phone.strip()}')")
+            response = cur.execute("INSERT INTO delegation(country_name, director_name, director_phone) "
+                        f"VALUES ('{country_name}', '{director_name}', '{director_phone}')")
 
 
     @cherrypy.expose
@@ -36,31 +37,29 @@ class App(object):
         with create_connection(self.args) as db:
             cur = db.cursor()
             cur.execute(f"INSERT INTO volunteer(name, phone_number) "
-                        f"VALUES ('{name}', '+{phone_number.strip()}')")
+                        f"VALUES ('{name}', '{phone_number}')")
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def register(self, sportsman, country, volunteer_id):
-        if not sportsman or not country or not volunteer_id:
+    def register(self, sportsman, country_name, volunteer_id):
+        if not sportsman or not country_name or not volunteer_id:
             # error
             pass
         with create_connection(self.args) as db:
             cur = db.cursor()
-            # cur.execute("select * from information_schema.tables")
-            print("sportsman.isdigit()")
-            print(sportsman.isdigit())
             if sportsman.isdigit():
                 # TODO should we create a new country here?
-                cur.execute(f"UPDATE sportsman SET delegation_id = '{country}', "
+                cur.execute(f"UPDATE sportsman SET country_name = '{country_name}', "
                             f"volunteer_id = {volunteer_id} "
                             f"WHERE card_number = {sportsman};")
             else:
-                cur.execute(f"INSERT INTO Sportsman (name, volunteer_id, delegation_id) "
-                            f"VALUES ('{sportsman}', {volunteer_id}, '{country}');")
+                cur.execute(f"INSERT INTO Sportsman (name, volunteer_id, country_name) "
+                            f"VALUES ('{sportsman}', {volunteer_id}, '{country_name}');")
 
 
-cherrypy.config.update({
-    'server.socket_host': '0.0.0.0',
-    'server.socket_port': 8080,
-})
-cherrypy.quickstart(App(parse_cmd_line()))
+if __name__ == '__main__':
+    cherrypy.config.update({
+        'server.socket_host': '0.0.0.0',
+        'server.socket_port': 8080,
+    })
+    cherrypy.quickstart(App(parse_cmd_line()))
