@@ -27,7 +27,7 @@ class App(object):
     def register_delegation(self, country_name, director_name, director_phone):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            response = cur.execute("INSERT INTO delegation(country_name, director_name, director_phone) "
+            cur.execute("INSERT INTO delegation(country_name, director_name, director_phone) "
                         f"VALUES ('{country_name}', '{director_name}', '{director_phone}')")
 
 
@@ -55,6 +55,24 @@ class App(object):
             else:
                 cur.execute(f"INSERT INTO Sportsman (name, volunteer_id, country_name) "
                             f"VALUES ('{sportsman}', {volunteer_id}, '{country_name}');")
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def countries(self):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute("SELECT id, country_name FROM Delegation")
+            countries = cur.fetchall()
+            return [{"id": c[0], "name": c[1]} for c in countries]
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def volunteers(self):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute("SELECT card_number, name FROM Volunteer")
+            volunteers = cur.fetchall()
+            return [{"id": b[0], "name": b[1]} for b in volunteers]
 
 
 if __name__ == '__main__':

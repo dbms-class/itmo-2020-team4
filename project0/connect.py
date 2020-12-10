@@ -27,7 +27,7 @@ def parse_cmd_line():
     parser.add_argument("-v", "--verbose", action='store_true', help='Debug loglevel')
     args = parser.parse_args()
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(format='%(levelname)s:\t%(message)s', level=logging.DEBUG)
         logging.debug("Debug logging is ON")
     del args.verbose
     return args
