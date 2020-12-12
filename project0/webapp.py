@@ -124,11 +124,16 @@ class App(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def volunteer_unassign(self, volunteer_id=None, tasks_ids=None):
-        tasks_ids = tasks_ids.split(",")
-        
-        response = []
         with create_connection(self.args) as db:
             cur = db.cursor()
+            
+            if tasks_ids == '*':
+                cur.execute(f'select id from volunteertask where volunteer_id = {volunteer_id}')
+                tasks_ids = [r[0] for r in cur]
+            else:
+                tasks_ids = tasks_ids.split(",")
+
+            response = []
             for task_id in tasks_ids:
                 cur.execute(f'''
                     with tasktime as
