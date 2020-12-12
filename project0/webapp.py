@@ -7,7 +7,7 @@ from connect import parse_cmd_line
 from connect import create_connection
 from static import index
 import logging
-
+from random import choice
 
 @cherrypy.expose
 class App(object):
@@ -119,7 +119,53 @@ class App(object):
             volunteers_with_counts = cur.fetchall()
             return [{"volunteer_id": b[0], "volunteer_name": b[1], "sportsman_count" : b[2],
                      "total_task_count" : b[3], "next_task_id" : b[4], "next_task_time" : str(b[5])} for b in volunteers_with_counts]
+        
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def volunteer_unassign(self, volunteer_id=None, tasks_ids=None):
+        tasks_ids = tasks_ids.split(",")
+        
+        response = []
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            for task_id in tasks_ids:
+                cur.execute(f'''
+                    with tasktime as
+                    (
+                        select time_ from volunteertask where id = 4
+                    )
+                    select card_number, count(*)
+                    from
+                    (
+                        select card_number
+                        from
+                            volunteer
+                        where intersection_size(card_number, 1000002) > 0 and card_number not in
+                        (
+                            select distinct volunteer_id
+                            from
+                                volunteertask
+                            where time_ >=  (select time_ from tasktime) - '1 hour'::interval and time_ <= (select time_ from tasktime) + '1 hour'::interval
+                        )
+                    ) as t1
+                    left join volunteertask on card_number = volunteer_id
+                    group by card_number
+                    order by count
+                    ''')
+                all_changers = cur.fetchall()
+                changers = []
+                for c in all_changers:
+                    if c[1] == all_changers[0][1]:
+                        changers.append(c[0])
+                
+                changer_id = volunteer_id if len(changers) == 0 else choice(changers)
+                cur.execute(f'select name from volunteer where card_number = {changer_id}')
+                name = cur.fetchone()[0]
+                response.append({"task_id": task_id, "new_volunteer_name": name, "new_volunteer_id": changer_id})
+                cur.execute(f'update volunteertask set volunteer_id = {changer_id} where id = {task_id}')
+        return response
+                
 
 if __name__ == '__main__':
     cherrypy.config.update({
