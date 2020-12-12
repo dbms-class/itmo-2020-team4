@@ -86,12 +86,39 @@ class App(object):
             [ {"volunteer_id": X, "volunteer_name": X, "sportsman_count": X, "total_task_count": X,
             "next_task_id": X, "next_task_time": X}, ... ]
         """
+        query = """
+            select t1.volunteer_id, t1.volunteer_name, t1.sportsman_count, t1.total_task_count, volunteertask.id as next_task_id, t1.next_task_time
+            from
+            (
+                select volunteer.card_number as volunteer_id,
+                    volunteer.name as volunteer_name,
+                    count(distinct sportsman.card_number) as sportsman_count,
+                    count(distinct volunteertask.id) as total_task_count,
+                    min(case when volunteertask.time_ > now() then volunteertask.time_ else null end) as next_task_time
+                from
+                    volunteer
+                        left join
+                    sportsman on volunteer.card_number = sportsman.volunteer_id
+                        left join
+                    volunteertask on volunteer.card_number = volunteertask.volunteer_id
+                group by volunteer.card_number
+            ) as t1
+            left join
+            volunteertask on t1.volunteer_id = volunteertask.volunteer_id and t1.next_task_time = volunteertask.time_
+            group by t1.volunteer_id, t1.volunteer_name, t1.sportsman_count, t1.total_task_count, t1.next_task_time, volunteertask.id   
+            """
+        if volunteer_id is not None:
+            query = f"select * from ({query}) as t2 where t2.volunteer_id = {volunteer_id}"
+        if sportsman_count is not None:
+            query = f"select * from ({query}) as t3 where t3.sportsman_count >= {sportsman_count}"
+        if total_task_count is not None:
+            query = f"select * from ({query}) as t4 where t4.total_task_count >= {total_task_count}"
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute("SELECT volunteer_id, COUNT(*) as count FROM volunteertask GROUP BY volunteer_id "
-                        "ORDER BY count DESC")
+            cur.execute(query)
             volunteers_with_counts = cur.fetchall()
-            return [{"id": b[0], "total_task_count": b[1]} for b in volunteers_with_counts]
+            return [{"volunteer_id": b[0], "volunteer_name": b[1], "sportsman_count" : b[2],
+                     "total_task_count" : b[3], "next_task_id" : b[4], "next_task_time" : str(b[5])} for b in volunteers_with_counts]
 
 
 if __name__ == '__main__':
