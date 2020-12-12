@@ -154,3 +154,30 @@ create table VolunteerTask
 
     unique (time_, volunteer_id)
 );
+
+create or replace function volunteers_delegations(vol_id integer) returns table(id int)
+as
+$$
+select id
+from
+(
+	select distinct country_name
+	from 
+		sportsman
+	where volunteer_id = vol_id
+) as t1
+natural join delegation
+$$
+language sql;
+
+create or replace function intersection_size(vol1 integer, vol2 integer) returns bigint
+as
+$$
+select count(*)
+from
+(
+	select * from volunteers_delegations(vol1)
+	intersect select * from volunteers_delegations(vol2)
+) as t1
+$$
+language sql;
