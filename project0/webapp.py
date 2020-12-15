@@ -138,7 +138,7 @@ class App(object):
                 cur.execute(f'''
                     with tasktime as
                     (
-                        select time_ from volunteertask where id = 4
+                        select time_ from volunteertask where id = {task_id}
                     )
                     select card_number, count(*)
                     from
