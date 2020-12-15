@@ -5,7 +5,7 @@ import cherrypy
 
 from connect import parse_cmd_line
 from static import index
-import logging
+# import logging
 from random import choice
 import psycopg2.pool as pg_pool
 
@@ -94,9 +94,9 @@ class App(object):
     @cherrypy.tools.json_out()
     def volunteer_load(self, volunteer_id=None, sportsman_count=None, total_task_count=None):
         """
-        :param volunteer_id: оставляет только во-лонтера с указанным идентификатором;
-        :param sportsman_count: оставляет тех, закем закреплено спортсменов неменьше, чем значение аргумента;
-        :param total_task_count: ставляет тех, у кого общее количество задач не меньше, чем значение аргумента;
+        :param volunteer_id: оставляет только волонтера с указанным идентификатором;
+        :param sportsman_count: оставляет тех, за кем закреплено спортсменов не меньше, чем значение аргумента;
+        :param total_task_count: оставляет тех, у кого общее количество задач не меньше, чем значение аргумента;
         :return: JSON
             [ {"volunteer_id": X, "volunteer_name": X, "sportsman_count": X, "total_task_count": X,
             "next_task_id": X, "next_task_time": X}, ... ]

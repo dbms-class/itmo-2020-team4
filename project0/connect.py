@@ -3,16 +3,6 @@
 import argparse
 import logging
 
-# Драйвер PostgreSQL
-# Находится в модуле psycopg2-binary, который можно установить командой
-# pip install psycopg2-binary или её аналогом.
-import psycopg2 as pg_driver
-import psycopg2.pool as pg_pool
-# Драйвер SQLite3
-# Находится в модуле sqlite3, который можно установить командой
-# pip install sqlite3 или её аналогом.
-import sqlite3 as sqlite_driver
-
 
 # Разбирает аргументы командной строки.
 # Выплевывает структуру с полями, соответствующими каждому аргументу.
