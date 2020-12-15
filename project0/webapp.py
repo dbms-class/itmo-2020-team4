@@ -128,17 +128,17 @@ class App(object):
             cur = db.cursor()
             
             if tasks_ids == '*':
-                cur.execute(f'select id from volunteertask where volunteer_id = {volunteer_id}')
+                cur.execute('select id from volunteertask where volunteer_id = %s', (volunteer_id,))
                 tasks_ids = [r[0] for r in cur]
             else:
                 tasks_ids = tasks_ids.split(",")
 
             response = []
             for task_id in tasks_ids:
-                cur.execute(f'''
+                cur.execute('''
                     with tasktime as
                     (
-                        select time_ from volunteertask where id = {task_id}
+                        select time_ from volunteertask where id = %s
                     )
                     select card_number, count(*)
                     from
@@ -157,7 +157,7 @@ class App(object):
                     left join volunteertask on card_number = volunteer_id
                     group by card_number
                     order by count
-                    ''')
+                    ''', (task_id,))
                 all_changers = cur.fetchall()
                 changers = []
                 for c in all_changers:
@@ -165,10 +165,10 @@ class App(object):
                         changers.append(c[0])
                 
                 changer_id = volunteer_id if len(changers) == 0 else choice(changers)
-                cur.execute(f'select name from volunteer where card_number = {changer_id}')
+                cur.execute('select name from volunteer where card_number = %s',(changer_id,))
                 name = cur.fetchone()[0]
                 response.append({"task_id": task_id, "new_volunteer_name": name, "new_volunteer_id": changer_id})
-                cur.execute(f'update volunteertask set volunteer_id = {changer_id} where id = {task_id}')
+                cur.execute('update volunteertask set volunteer_id = %s where id = %s', (changer_id,task_id))
         return response
                 
 
