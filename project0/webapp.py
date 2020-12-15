@@ -19,6 +19,7 @@ class DBConn:
         return self.conn
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.conn.commit()
         self.pool.putconn(self.conn)
 
 
