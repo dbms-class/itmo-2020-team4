@@ -7,13 +7,6 @@ create table Sport
     name    citext unique not null check (char_length(name) > 0)
 );
 
--- Dict for Countries that are coming to the event
-create table Country
-(
-    id      serial primary key,
-    name    citext unique not null check (char_length(name) > 0)
-);
-
 create table FacilityFunction
 (
     id      serial primary key,
@@ -49,11 +42,11 @@ create table Delegation
 (
     id              serial primary key,
 
+    country_name    citext unique not null check (char_length(country_name) > 0),
     director_name   text not null check (char_length(director_name) > 0),
     director_phone  text unique not null check (director_phone ~ E'^\\+\\d{11,15}'),
 
-    headquarters_id int references Facility not null,
-    country_id      int references Country not null
+    headquarters_id int references Facility
 );
 
 -- у каждым спортсмена не уникальный волонтёр(имя,телефон,карточка как у спортсмена)
@@ -62,7 +55,7 @@ create table Volunteer
     card_number     serial primary key check(card_number >= 1e6),
 
     name            text not null check (char_length(name) > 0),
-    phone_number    text not null check (phone_number ~ E'^\\+\\d{11,15}') 
+    phone_number    text not null check (phone_number ~ E'^\\+\\d{11,15}')
 );
 -- У спортсменов карточки до миллиона, у волонтёров после
 alter sequence volunteer_card_number_seq restart with 1000000;
@@ -72,15 +65,18 @@ create table Sportsman
 (
     card_number   serial primary key check(card_number < 1e6),
 
-    delegation_id int references Delegation not null,
-    facility_id   int references Facility not null,
+    country_name  citext not null,
     volunteer_id  int references Volunteer not null,
+    facility_id   int references Facility,
 
     name          text not null check (char_length(name) > 0),
     gender        bool, -- null for those that have not decided yet
-    height        float not null check (height > 0),
-    weight        float not null check (weight > 0),
-    age           int not null check (age < 99 and age > 14)
+    height        float check (height > 0),
+    weight        float check (weight > 0),
+    age           int check (age < 99 and age > 14),
+
+    constraint fk_sportsman_country foreign key (country_name)
+    references Delegation(country_name)
 );
 
 --Каждый спортсмен выступает в каком-то виде спорта, возможно даже не в одном
@@ -158,3 +154,30 @@ create table VolunteerTask
 
     unique (time_, volunteer_id)
 );
+
+create or replace function volunteers_delegations(vol_id integer) returns table(id int)
+as
+$$
+select id
+from
+(
+	select distinct country_name
+	from 
+		sportsman
+	where volunteer_id = vol_id
+) as t1
+natural join delegation
+$$
+language sql;
+
+create or replace function intersection_size(vol1 integer, vol2 integer) returns bigint
+as
+$$
+select count(*)
+from
+(
+	select * from volunteers_delegations(vol1)
+	intersect select * from volunteers_delegations(vol2)
+) as t1
+$$
+language sql;
